@@ -35,14 +35,13 @@ export const actions: Actions = {
 
             console.log('Login attempt:', user);
 
-            // 2. ПЕРЕВІРКА ПРАВ ДОСТУПУ
-            if (user.role_id !== 1) {
-                console.log(`Access denied for user ${user.email}. Role ID is ${user.role_id}, expected 1.`);
+            // 2. ПЕРЕВІРКА ПРАВ ДОСТУПУ (За string)
+            if (user.role !== 'admin') {
+                console.log(`Access denied for user ${user.email}. Role is ${user.role}, expected 'admin'.`);
                 return fail(403, { email, error: 'Доступ дозволено лише адміністратору' });
             }
 
             // 3. ВСТАНОВЛЕННЯ COOKIE
-            // Важливо: перетворіть ID в рядок
             if (user.user_id) {
                 cookies.set('userId', String(user.user_id), {
                     path: '/',
@@ -59,18 +58,16 @@ export const actions: Actions = {
             return fail(500, { error: 'Database connection error during login' });
         }
 
-        // Якщо все ок - перекидаємо
         throw redirect(303, '/admin/stats');
     },
 
     register: async ({ request }) => {
-        // ... (Ваш код реєстрації без змін, він правильний)
         const data = await request.formData();
         const email = data.get('email') as string;
         const password = data.get('password') as string;
         const fullName = data.get('full_name') as string;
         const phone = data.get('phone') as string;
-        const roleId = 2; // Звичайний юзер
+        const role = 'user'; // Дефолтна роль рядком
 
         if (!email || !password || !fullName) return fail(400, { register: true, missing: true });
 
@@ -84,7 +81,7 @@ export const actions: Actions = {
                 password_hash: hash,
                 full_name: fullName,
                 phone_number: phone,
-                role_id: roleId
+                role: role // string
             });
             await newUser.save();
             return { success: true, registered: true };

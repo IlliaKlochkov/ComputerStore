@@ -7,14 +7,12 @@ export interface IUser {
     password_hash: string;
     email: string;
     phone_number: string;
-    role_id: number;
-    role_name?: string; // Для відображення
+    role: string; // Змінено з role_id на role (string)
 }
-
 
 export interface UserFilters {
     search?: string;
-    roleId?: number;
+    role?: string; // Фільтруємо по рядку
     sortBy?: string;
     sortDir?: 'asc' | 'desc';
 }
@@ -25,8 +23,7 @@ export class User {
     private _passwordHash: string;
     private _email: string;
     private _phone: string;
-    private _roleId: number;
-    private _roleName: string | undefined;
+    private _role: string;
 
     constructor(data: IUser) {
         this._id = data.user_id || null;
@@ -34,11 +31,11 @@ export class User {
         this._passwordHash = data.password_hash;
         this._email = data.email;
         this._phone = data.phone_number;
-        this._roleId = data.role_id;
-        this._roleName = data.role_name;
+        this._role = data.role;
     }
 
     get passwordHash() { return this._passwordHash; }
+    get role() { return this._role; } // Геттер для ролі
 
     toJSON(): IUser {
         return {
@@ -47,8 +44,7 @@ export class User {
             password_hash: this._passwordHash,
             email: this._email,
             phone_number: this._phone,
-            role_id: this._roleId,
-            role_name: this._roleName
+            role: this._role
         };
     }
 
@@ -65,25 +61,21 @@ export class User {
     }
 
     static async findWithFilters(filters: UserFilters): Promise<User[]> {
-        let sql = `
-            SELECT u.*, r.name as role_name 
-            FROM user u
-            LEFT JOIN role r ON u.role_id = r.role_id
-            WHERE 1=1
-        `;
+        // Прибрано JOIN, оскільки роль тепер у таблиці user
+        let sql = `SELECT * FROM user WHERE 1=1`;
         const params: any[] = [];
 
         if (filters.search) {
-            sql += ' AND (u.full_name LIKE ? OR u.email LIKE ?)';
+            sql += ' AND (full_name LIKE ? OR email LIKE ?)';
             params.push(`%${filters.search}%`, `%${filters.search}%`);
         }
-        if (filters.roleId) {
-            sql += ' AND u.role_id = ?';
-            params.push(filters.roleId);
+        if (filters.role) {
+            sql += ' AND role = ?';
+            params.push(filters.role);
         }
 
-        const allowedSorts = ['full_name', 'email', 'role_name'];
-        const orderBy = (filters.sortBy && allowedSorts.includes(filters.sortBy)) ? filters.sortBy : 'u.user_id';
+        const allowedSorts = ['full_name', 'email', 'role'];
+        const orderBy = (filters.sortBy && allowedSorts.includes(filters.sortBy)) ? filters.sortBy : 'user_id';
         const orderDir = (filters.sortDir && filters.sortDir.toLowerCase() === 'desc') ? 'DESC' : 'ASC';
 
         sql += ` ORDER BY ${orderBy} ${orderDir}`;
@@ -95,13 +87,13 @@ export class User {
     async save(): Promise<void> {
         if (this._id) {
             await runDBCommand(
-                'UPDATE user SET full_name=?, password_hash=?, email=?, phone_number=?, role_id=? WHERE user_id=?',
-                [this._fullName, this._passwordHash, this._email, this._phone, this._roleId, this._id]
+                'UPDATE user SET full_name=?, password_hash=?, email=?, phone_number=?, role=? WHERE user_id=?',
+                [this._fullName, this._passwordHash, this._email, this._phone, this._role, this._id]
             );
         } else {
             const res = await runDBCommand(
-                'INSERT INTO user (full_name, password_hash, email, phone_number, role_id) VALUES (?, ?, ?, ?, ?)',
-                [this._fullName, this._passwordHash, this._email, this._phone, this._roleId]
+                'INSERT INTO user (full_name, password_hash, email, phone_number, role) VALUES (?, ?, ?, ?, ?)',
+                [this._fullName, this._passwordHash, this._email, this._phone, this._role]
             ) as ResultSetHeader;
             this._id = res.insertId;
         }

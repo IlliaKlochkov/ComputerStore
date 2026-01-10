@@ -189,7 +189,7 @@
         },
         { key: 'length_mm', label: 'Length (mm)', type: 'number',  attributes: {min: 1} },
         { key: 'quantity', label: 'Qty', type: 'number', attributes: { min: 0 } },
-        { key: 'price', label: 'Price', type: 'number', required: true, format: (val) => `$${val}`, attributes: { min: 0, step: 0.01 } }
+        { key: 'price', label: 'Price $', type: 'number', required: true, format: (val) => `$${val}`, attributes: { min: 0, step: 0.01, max: 9999999} }
     ];
 </script>
 

@@ -6,7 +6,6 @@
 
     let { data } = $props();
     let crudComponent: CrudPage;
-
     // --- ФІЛЬТРИ ---
     const filterConfig: FilterConfig[] = [
         { key: 'search', label: 'Search User', type: 'text', placeholder: 'Name or Email...' },
@@ -16,18 +15,23 @@
             type: 'select',
             options: [
                 { value: '', name: 'All Roles' },
-                ...(data.roles ? data.roles.map(r => ({ value: r.role_id!, name: r.name })) : [])
+                ...(data.roles ? data.roles.map(r => ({ value: r.value, name: r.name })) : [])
             ]
         }
     ];
-
     // --- ТАБЛИЦЯ ---
     const tableConfig: FieldConfig[] = [
         { key: 'user_id', label: 'ID', type: 'hidden', hideInTable: true },
 
         { key: 'full_name', label: 'Full Name', type: 'text', required: true, placeholder: 'Ivan Ivanov' },
 
-        { key: 'email', label: 'Email', type: 'text', required: true, placeholder: 'mail@example.com' },
+        {
+            key: 'email',
+            label: 'Email',
+            type: 'email',
+            required: true,
+            placeholder: 'mail@example.com'
+        },
 
         {
             key: 'password_hash',
@@ -35,18 +39,32 @@
             type: 'password',
             required: false,
             hideInTable: true,
-            placeholder: 'Leave empty to keep current'
+            placeholder: 'Leave empty to keep current',
+            attributes: { minlength: 6 }
         },
 
-        { key: 'phone_number', label: 'Phone', type: 'text', placeholder: '+380...' },
+        {
+            key: 'phone_number',
+            label: 'Phone',
+            type: 'text',
+            required: false,
+            placeholder: '+380XXXXXXXXX',
+            attributes: {
+                maxlength: 13,
+                pattern: "^\\+380\\d{9}$",
+                title: "Format: +380XXXXXXXXX",
+                oninput: "if(!this.value.startsWith('+380')) this.value = '+380' + this.value.replace(/[^0-9]/g, '').substring(0,9);"
+            }
+        },
 
         {
-            key: 'role_id',
+            key: 'role', // Використовуємо поле role (string)
             label: 'Role',
             type: 'select',
             required: true,
-            options: data.roles ? data.roles.map(r => ({ value: r.role_id!, name: r.name })) : [],
-            format: (val) => data.roles?.find(r => r.role_id === val)?.name || val
+            // Мапимо статичні ролі
+            options: data.roles ? data.roles.map(r => ({ value: r.value, name: r.name })) : [],
+            format: (val) => data.roles?.find(r => r.value === val)?.name || val
         }
     ];
 </script>
