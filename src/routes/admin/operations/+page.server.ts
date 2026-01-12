@@ -101,8 +101,8 @@ export const actions: Actions = {
             // 1. Створюємо операцію
             const op = new Operation({
                 user_id: userId,
-                operation_type_id: typeId,
-                operation_type: typeName,
+                // operation_type_id: typeId, // видаляємо цей рядок
+                operation_type: typeName as any, // TypeScript може сваритися на string, тому 'as any' або 'as OperationTypeEnum'
                 videocard_id: cardId,
                 quantity: qty
             });
@@ -178,8 +178,7 @@ export const actions: Actions = {
             const op = new Operation({
                 operation_id: id,
                 user_id: userId,
-                operation_type_id: typeId,
-                operation_type: typeName,
+                operation_type: typeName as any,
                 videocard_id: cardId,
                 quantity: qty
             });
