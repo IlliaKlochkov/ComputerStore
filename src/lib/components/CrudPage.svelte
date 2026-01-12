@@ -6,22 +6,23 @@
     import { goto, invalidateAll } from '$app/navigation';
     import type { FieldConfig } from '$lib/types/crud';
 
-    // Додано extraActions до props
-    let { items = [], fields = [], entityName = "Item", sort = '', order = 'asc', extraActions } = $props<{
+    // Додано deleteWarning до props
+    let { items = [], fields = [], entityName = "Item", sort = '', order = 'asc', extraActions, deleteWarning } = $props<{
         items: any[],
         fields: FieldConfig[],
         entityName: string,
         sort?: string,
         order?: 'asc' | 'desc' | string,
-        extraActions?: any // Snippet
+        extraActions?: any, // Snippet
+        deleteWarning?: string // Текст попередження про каскадне видалення
     }>();
 
     let isDrawerOpen = $state(false);
     let isDeleteModalOpen = $state(false);
     let deleteId = $state<number | string | null>(null);
     let formState = $state<any>({});
-
     let deleteError = $state<string | null>(null);
+
     function getEmptyForm() {
         const obj: any = {};
         fields.forEach(f => {
@@ -44,11 +45,13 @@
         }
         isDrawerOpen = true;
     };
+
     export function openCreate() {
         openDrawer(null);
     }
 
     const idField = fields.find(f => f.type === 'hidden')?.key || 'id';
+
     function handleSort(key: string) {
         const url = new URL($page.url);
         if (sort === key) {
@@ -175,6 +178,14 @@
     <div class="text-center">
         <ExclamationCircleOutline class="mx-auto mb-4 text-gray-400 w-12 h-12" />
         <h3 class="mb-5 text-lg text-gray-500">Delete this {entityName}?</h3>
+
+        {#if deleteWarning}
+            <div class="mb-5 p-3 text-sm text-red-800 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-900 border border-red-200">
+                <span class="font-bold uppercase">Увага!</span>
+                <p class="mt-1">{deleteWarning}</p>
+            </div>
+        {/if}
+
         {#if deleteError}
             <div class="mb-4 p-3 text-sm text-red-800 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-900" role="alert">
                 <div class="flex items-center gap-2">
@@ -184,6 +195,7 @@
                 <div class="mt-1">{deleteError}</div>
             </div>
         {/if}
+
         <form method="POST" action="?/delete"
               use:enhance={() => {
                 return async ({ result }) => {
@@ -196,7 +208,7 @@
                         await invalidateAll();
                     }
                 };
-             }}
+            }}
               class="inline-flex"
         >
             <input type="hidden" name="id" value={deleteId} />

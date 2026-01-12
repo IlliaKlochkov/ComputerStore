@@ -1,18 +1,21 @@
 import { runDBCommand } from '$lib/server/db';
 import type { ResultSetHeader } from 'mysql2';
 
+// Визначаємо тип для ролі, щоб уникнути помилок (відповідає ENUM в БД)
+export type UserRole = 'admin' | 'manager' | 'user';
+
 export interface IUser {
     user_id?: number;
     full_name: string;
     password_hash: string;
     email: string;
     phone_number: string;
-    role: string; // Змінено з role_id на role (string)
+    role: UserRole; // Змінено з role_id на role
 }
 
 export interface UserFilters {
     search?: string;
-    role?: string; // Фільтруємо по рядку
+    role?: UserRole; // Фільтруємо по рядку, а не по ID
     sortBy?: string;
     sortDir?: 'asc' | 'desc';
 }
@@ -23,7 +26,7 @@ export class User {
     private _passwordHash: string;
     private _email: string;
     private _phone: string;
-    private _role: string;
+    private _role: UserRole; // Змінено
 
     constructor(data: IUser) {
         this._id = data.user_id || null;
@@ -31,11 +34,14 @@ export class User {
         this._passwordHash = data.password_hash;
         this._email = data.email;
         this._phone = data.phone_number;
-        this._role = data.role;
+        this._role = data.role; // Пряме присвоєння
     }
 
     get passwordHash() { return this._passwordHash; }
-    get role() { return this._role; } // Геттер для ролі
+    // Гетери для зручного доступу
+    get role() { return this._role; }
+    get fullName() { return this._fullName; }
+    get email() { return this._email; }
 
     toJSON(): IUser {
         return {
@@ -61,7 +67,7 @@ export class User {
     }
 
     static async findWithFilters(filters: UserFilters): Promise<User[]> {
-        // Прибрано JOIN, оскільки роль тепер у таблиці user
+        // Прибираємо JOIN, бо роль тепер зберігається в самій таблиці user
         let sql = `SELECT * FROM user WHERE 1=1`;
         const params: any[] = [];
 

@@ -9,6 +9,7 @@
     let { data } = $props();
     let crudComponent: CrudPage;
     let receiptOp = $state<any>(null);
+
     const formattedDate = new Date().toLocaleString('uk-UA', {
         day: '2-digit', month: '2-digit', year: 'numeric',
         hour: '2-digit', minute: '2-digit'
@@ -20,6 +21,32 @@
             window.print();
         }, 100);
     }
+
+    // --- Логіка для заголовків чека ---
+    function getReceiptTitle(type: string) {
+        switch (type) {
+            case 'Purchase': return 'Sales Receipt';
+            case 'Return': return 'Return Receipt';
+            case 'Restock': return 'Stock Entry';
+            default: return 'Operation Receipt';
+        }
+    }
+
+    function getUserLabel(type: string) {
+        switch (type) {
+            case 'Restock': return 'Processed By'; // Для поповнення це співробітник
+            default: return 'Customer'; // Для покупок/повернень це клієнт
+        }
+    }
+
+    function getTotalLabel(type: string) {
+        switch (type) {
+            case 'Return': return 'Refund Total';
+            case 'Restock': return 'Total Value';
+            default: return 'Total';
+        }
+    }
+    // ----------------------------------
 
     const filterConfig: FilterConfig[] = [
         { key: 'search', label: 'Search User/GPU', type: 'text', placeholder: 'Name...' },
@@ -122,7 +149,7 @@
 {#if receiptOp}
     <div class="hidden print:flex fixed top-0 left-0 w-full h-full bg-white z-[9999] flex-col items-center justify-start p-10 text-black">
         <div class="border-b-2 border-black pb-4 mb-6 w-full text-center">
-            <h1 class="text-3xl font-bold uppercase">Sales Receipt</h1>
+            <h1 class="text-3xl font-bold uppercase">{getReceiptTitle(receiptOp.operation_type)}</h1>
             <p class="text-sm text-gray-600">GPU Store Inc.</p>
         </div>
 
@@ -136,7 +163,7 @@
                 <span>#{receiptOp.operation_id}</span>
             </div>
             <div class="flex justify-between border-b border-gray-300 pb-1">
-                <span class="font-bold">Customer:</span>
+                <span class="font-bold">{getUserLabel(receiptOp.operation_type)}:</span>
                 <span>{receiptOp.user_name}</span>
             </div>
             <div class="flex justify-between border-b border-gray-300 pb-1">
@@ -151,7 +178,7 @@
                 <th class="py-2">Item</th>
                 <th class="py-2 text-center">Qty</th>
                 <th class="py-2 text-right">Price</th>
-                <th class="py-2 text-right">Total</th>
+                <th class="py-2 text-right">{getTotalLabel(receiptOp.operation_type)}</th>
             </tr>
             </thead>
             <tbody>
@@ -166,6 +193,9 @@
 
         <div class="text-center text-xs w-full border-t border-gray-300">
             <p class="mb-1 text-gray-500">Generated at {formattedDate}</p>
+            {#if receiptOp.operation_type === 'Return'}
+                <p class="mt-2 font-bold uppercase border-2 border-black inline-block px-2 py-1">Refund Approved</p>
+            {/if}
         </div>
     </div>
 {/if}
